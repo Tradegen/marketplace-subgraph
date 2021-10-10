@@ -1,38 +1,34 @@
 import { BigDecimal, BigInt } from "@graphprotocol/graph-ts";
 import {
-  DepositPool as DepositPoolEvent,
-  WithdrawPool as WithdrawPoolEvent,
-  MintFeePool as MintFeePoolEvent,
-  Pool,
+  CreateListing as CreateListingEvent,
+  RemoveListing as RemoveListingEvent,
+  UpdatePrice as UpdatePriceEvent,
+  UpdateQuantity as UpdateQuantityEvent,
+  Purchase as PurchaseEvent,
   User,
-  PoolTransaction,
-  PoolPosition,
-  Tradegen
-} from "../../generated/schema";
+  Transaction,
+  Listing,
+  Marketplace
+} from "../types/schema";
 import {
-  Deposit,
-  Withdraw,
-  MintedManagerFee,
-  ExecutedTransaction
-} from "../../generated/templates/Pool/Pool";
+  CreatedListing,
+  RemovedListing,
+  UpdatedPrice,
+  UpdatedQuantity,
+  Purchased
+} from "../types/Marketplace/Marketplace";
 import {
-  updatePoolDayData,
-  updatePoolHourData,
-  updateTradegenDayData,
+  updateMarketplaceDayData,
 } from "./dayUpdates";
 import {
-  fetchPoolTokenPrice,
-  fetchPoolTotalSupply,
-  fetchPoolPositionAddresses,
-  fetchPoolPositionBalances,
-  ADDRESS_RESOLVER_ADDRESS,
+  MARKETPLACE_ADDRESS,
   ONE_BI,
   ZERO_BD,
   ZERO_BI
 } from "./helpers";
 
-export function handleDeposit(event: Deposit): void {
-    let pool = Pool.load(event.address.toHexString());
+export function handleCreateListing(event: CreatedListing): void {
+    /*let pool = Pool.load(event.address.toHexString());
     
     let totalSupply = fetchPoolTotalSupply(event.address);
     let tokenPrice = fetchPoolTokenPrice(event.address);
@@ -120,11 +116,11 @@ export function handleDeposit(event: Deposit): void {
     let tokensAdded: BigInt = (tokenPrice == ZERO_BI) ? ZERO_BI : (event.params.amount).times(BigInt.fromString("1000000000000000000")).div(tokenPrice);
     poolPosition.tokenBalance = poolPosition.tokenBalance.plus(tokensAdded);
     poolPosition.USDValue = poolPosition.USDValue.plus(event.params.amount);
-    poolPosition.save();
+    poolPosition.save();*/
 }
 
-export function handleWithdraw(event: Withdraw): void {
-    let pool = Pool.load(event.address.toHexString());
+export function handleRemoveListing(event: RemovedListing): void {
+    /*let pool = Pool.load(event.address.toHexString());
     
     let totalSupply = fetchPoolTotalSupply(event.address);
     let tokenPrice = fetchPoolTokenPrice(event.address);
@@ -215,11 +211,11 @@ export function handleWithdraw(event: Withdraw): void {
     poolPosition.USDValue = (valueWithdrawn >= poolPosition.USDValue) ? ZERO_BI : poolPosition.USDValue.minus(valueWithdrawn);
     poolPosition.tokenBalance = (event.params.numberOfPoolTokens >= poolPosition.tokenBalance) ?
                                   ZERO_BI : poolPosition.tokenBalance.minus(event.params.numberOfPoolTokens);
-    poolPosition.save();
+    poolPosition.save();*/
 }
 
-export function handleMintedManagerFee(event: MintedManagerFee): void {
-    let pool = Pool.load(event.address.toHexString());
+export function handleUpdatePrice(event: UpdatedPrice): void {
+    /*let pool = Pool.load(event.address.toHexString());
     
     let totalSupply = fetchPoolTotalSupply(event.address);
     let tokenPrice = fetchPoolTokenPrice(event.address);
@@ -291,11 +287,11 @@ export function handleMintedManagerFee(event: MintedManagerFee): void {
   
     // update hourly pool data
     poolHourData.hourlyVolumeUSD = poolHourData.hourlyVolumeUSD.plus(new BigDecimal(event.params.amount));
-    poolHourData.save();
+    poolHourData.save();*/
 }
 
-export function handleExecutedTransaction(event: ExecutedTransaction): void {
-  let pool = Pool.load(event.address.toHexString());
+export function handleUpdatedQuantity(event: UpdatedQuantity): void {
+  /*let pool = Pool.load(event.address.toHexString());
   
   let positionAddresses = fetchPoolPositionAddresses(event.address);
   let positionBalances = fetchPoolPositionBalances(event.address);
@@ -303,5 +299,17 @@ export function handleExecutedTransaction(event: ExecutedTransaction): void {
   // update pool data
   pool.positionAddresses = (positionAddresses) ? positionAddresses : pool.positionAddresses;
   pool.positionBalances = (positionBalances) ? positionBalances : pool.positionBalances;
-  pool.save();
+  pool.save();*/
+}
+
+export function handlePurchase(event: Purchased): void {
+  /*let pool = Pool.load(event.address.toHexString());
+  
+  let positionAddresses = fetchPoolPositionAddresses(event.address);
+  let positionBalances = fetchPoolPositionBalances(event.address);
+
+  // update pool data
+  pool.positionAddresses = (positionAddresses) ? positionAddresses : pool.positionAddresses;
+  pool.positionBalances = (positionBalances) ? positionBalances : pool.positionBalances;
+  pool.save();*/
 }

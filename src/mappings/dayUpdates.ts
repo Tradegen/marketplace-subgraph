@@ -2,8 +2,8 @@ import { BigInt, ethereum } from "@graphprotocol/graph-ts";
 import {
   MarketplaceDayData,
   Marketplace,
-} from "../../generated/schema";
-import { MARKETPLACE_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI } from "./helpers";
+} from "../types/schema";
+import { MARKETPLACE_ADDRESS, ZERO_BD, ZERO_BI } from "./helpers";
 
 export function updateMarketplaceDayData(event: ethereum.Event): MarketplaceDayData {
   let marketplace = Marketplace.load(MARKETPLACE_ADDRESS);
@@ -13,16 +13,15 @@ export function updateMarketplaceDayData(event: ethereum.Event): MarketplaceDayD
   let marketplaceDayData = MarketplaceDayData.load(dayID.toString());
   if (marketplaceDayData === null)
   {
-    marketplaceDayData = new marketplaceDayData(dayID.toString());
+    marketplaceDayData = new MarketplaceDayData(dayID.toString());
     marketplaceDayData.date = dayStartTimestamp;
     marketplaceDayData.dailyVolumeUSD = ZERO_BD;
     marketplaceDayData.totalVolumeUSD = ZERO_BD;
-    marketplaceDayData.totalTokensSold = ZERO_BI;
+    marketplaceDayData.dailyNumberOfTokensSold = ZERO_BI;
     marketplaceDayData.txCount = ZERO_BI;
   }
 
   marketplaceDayData.totalVolumeUSD = marketplace.totalVolumeUSD;
-  marketplaceDayData.totalTokensSold = marketplace.totalTokensSold;
   marketplaceDayData.txCount = marketplace.txCount;
   marketplaceDayData.save();
 
