@@ -18,6 +18,7 @@ type Marketplace @entity {
 type Listing @entity {
   # index in Marketplace contract listings array
   id: ID!
+  exists: Boolean!
 
   seller: User!
   assetAddress: String!
@@ -109,9 +110,11 @@ type Purchase @entity {
   transaction: Transaction!
   timestamp: BigInt! # need this to pull recent txns for marketplace
 
+  buyer: String!
   seller: String!
   assetAddress: String!
   numberOfTokens: BigInt!
+  tokenPrice: BigInt!
 
   index: BigInt! # index in Marketplace contract listings array
 }

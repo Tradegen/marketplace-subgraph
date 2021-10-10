@@ -8,7 +8,7 @@ dataSources:
     name: Marketplace
     network: celo-alfajores
     source:
-      address: "0x4306F56e43D4dfec5Ab90760654d68E983d97137"
+      address: "0x2db44b4791e86DE173A0b1279DEAe1AF21E50cB4"
       abi: Marketplace
       startBlock: 6940000
     mapping:
@@ -22,13 +22,13 @@ dataSources:
         - name: Marketplace
           file: ./abis/Marketplace.json
       eventHandlers:
-        - event: CreatedListing(indexed address,indexed address,uint256,uint256,uint256,uint256)
+        - event: CreatedListing(indexed address,indexed address,uint256,uint256,uint256,uint256,uint256)
           handler: handleCreateListing
-        - event: RemovedListing(indexed address,indexed address,uint256)
+        - event: RemovedListing(indexed address,indexed address,uint256,uint256)
           handler: handleRemoveListing
         - event: UpdatedPrice(indexed address,indexed address,uint256,uint256,uint256)
           handler: handleUpdatePrice
         - event: UpdatedQuantity(indexed address,indexed address,uint256,uint256,uint256)
           handler: handleUpdateQuantity
-        - event: Purchased(indexed address,indexed address,uint256,uint256,uint256)
+        - event: Purchased(indexed address,indexed address,uint256,uint256,uint256,uint256)
           handler: handlePurchase

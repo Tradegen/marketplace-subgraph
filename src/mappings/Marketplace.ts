@@ -28,288 +28,317 @@ import {
 } from "./helpers";
 
 export function handleCreateListing(event: CreatedListing): void {
-    /*let pool = Pool.load(event.address.toHexString());
-    
-    let totalSupply = fetchPoolTotalSupply(event.address);
-    let tokenPrice = fetchPoolTokenPrice(event.address);
-    let positionAddresses = fetchPoolPositionAddresses(event.address);
-    let positionBalances = fetchPoolPositionBalances(event.address);
-
-    tokenPrice = (tokenPrice == ZERO_BI) ? BigInt.fromString("1000000000000000000") : tokenPrice;
+    // update global values
+    let marketplace = Marketplace.load(MARKETPLACE_ADDRESS);
+    if (marketplace === null) {
+      marketplace = new Marketplace(MARKETPLACE_ADDRESS);
+      marketplace.listingCount = 0;
+      marketplace.totalVolumeUSD = ZERO_BD;
+      marketplace.totalTokensSold = ZERO_BI;
+      marketplace.txCount = ZERO_BI;
+    }
+    marketplace.listingCount = marketplace.listingCount + 1;
+    marketplace.txCount = marketplace.txCount.plus(ONE_BI);
+    marketplace.save();
 
     // create the user
-    let user = User.load(event.params.userAddress.toHexString());
+    let user = User.load(event.params.seller.toHexString());
     if (user === null)
     {
-        user = new User(event.params.userAddress.toHexString());
-        user.feesEarned = ZERO_BD;
+        user = new User(event.params.seller.toHexString());
+        user.numberOfTokensSold = ZERO_BI;
+        user.tradingVolumeUSD = ZERO_BD;
     }
-
     user.save();
-    
-    // update pool data
-    pool.tokenPrice = tokenPrice;
-    pool.totalSupply = totalSupply;
-    pool.tradeVolumeUSD = pool.tradeVolumeUSD.plus(new BigDecimal(event.params.amount));
-    pool.totalValueLockedUSD = pool.totalValueLockedUSD.plus(new BigDecimal(event.params.amount));
-    pool.positionAddresses = (positionAddresses) ? positionAddresses : pool.positionAddresses;
-    pool.positionBalances = (positionBalances) ? positionBalances : pool.positionBalances;
-    pool.save();
-    
-    // update global values
-    let tradegen = Tradegen.load(ADDRESS_RESOLVER_ADDRESS);
-    tradegen.totalVolumeUSD = tradegen.totalVolumeUSD.plus(new BigDecimal(event.params.amount));
-    tradegen.totalValueLockedUSD = tradegen.totalValueLockedUSD.plus(new BigDecimal(event.params.amount));
-    tradegen.txCount = tradegen.txCount.plus(ONE_BI);
-    tradegen.save();
-    
-    let transaction = PoolTransaction.load(event.transaction.hash.toHexString());
-    if (transaction === null) {
-      transaction = new PoolTransaction(event.transaction.hash.toHexString());
-      transaction.blockNumber = event.block.number;
-      transaction.timestamp = event.block.timestamp;
-      transaction.pool = event.address.toHexString();
-    }
 
+    // create the listing
+    let listing = new Listing(event.params.marketplaceListing.toString());
+    listing.exists = true;
+    listing.seller = user.id;
+    listing.assetAddress = event.params.asset.toHexString();
+    listing.tokenClass = event.params.tokenClass;
+    listing.numberOfTokens = event.params.numberOfTokens;
+    listing.tokenPrice = event.params.price;
+    listing.save();
+    
+    let transaction = new Transaction(event.transaction.hash.toHexString());
+    transaction.blockNumber = event.block.number;
+    transaction.timestamp = event.block.timestamp;
+    transaction.user = user.id;
+    transaction.assetAddress = event.params.asset.toHexString();
     transaction.save();
     
-    // update deposit event
-    let deposit = new DepositPoolEvent(event.transaction.hash.toHexString().concat("-deposit"));
-    deposit.poolTransaction = transaction.id;
-    deposit.timestamp = transaction.timestamp;
-    deposit.userAddress = event.params.userAddress.toHexString();
-    deposit.poolAddress = event.address.toHexString();
-    deposit.amount = event.params.amount;
-    deposit.save();
+    // update CreateListing event
+    let create = new CreateListingEvent(event.transaction.hash.toHexString().concat("-createListing"));
+    create.transaction = transaction.id;
+    create.timestamp = transaction.timestamp;
+    create.seller = event.params.seller.toHexString();
+    create.assetAddress = event.params.asset.toHexString();
+    create.tokenClass = event.params.tokenClass;
+    create.numberOfTokens = event.params.numberOfTokens;
+    create.tokenPrice = event.params.price;
+    create.index = event.params.marketplaceListing;
+    create.save();
     
     // update the transaction
-    transaction.deposit = deposit.id;
+    transaction.createListing = create.id;
     transaction.save();
     
     // update day entities
-    let poolDayData = updatePoolDayData(event);
-    let poolHourData = updatePoolHourData(event);
-    let tradegenDayData = updateTradegenDayData(event);
-    
-    // deposit specific updating
-    tradegenDayData.dailyVolumeUSD = tradegenDayData.dailyVolumeUSD.plus(new BigDecimal(event.params.amount));
-    tradegenDayData.save();
-  
-    // deposit specific updating for pool
-    poolDayData.dailyVolumeUSD = poolDayData.dailyVolumeUSD.plus(new BigDecimal(event.params.amount));
-    poolDayData.save();
-  
-    // update hourly pool data
-    poolHourData.hourlyVolumeUSD = poolHourData.hourlyVolumeUSD.plus(new BigDecimal(event.params.amount));
-    poolHourData.save();
-    
-    let poolPosition = PoolPosition.load(event.address.toHexString().concat("-").concat(event.params.userAddress.toHexString()));
-    if (poolPosition === null)
-    {
-        poolPosition = new PoolPosition(event.address.toHexString().concat("-").concat(event.params.userAddress.toHexString()));
-        poolPosition.user = event.params.userAddress.toHexString();
-        poolPosition.pool = event.address.toHexString();
-        poolPosition.tokenBalance = ZERO_BI;
-        poolPosition.USDValue = ZERO_BI
-    }
-
-    let tokensAdded: BigInt = (tokenPrice == ZERO_BI) ? ZERO_BI : (event.params.amount).times(BigInt.fromString("1000000000000000000")).div(tokenPrice);
-    poolPosition.tokenBalance = poolPosition.tokenBalance.plus(tokensAdded);
-    poolPosition.USDValue = poolPosition.USDValue.plus(event.params.amount);
-    poolPosition.save();*/
+    let marketplaceDayData = updateMarketplaceDayData(event);
 }
 
 export function handleRemoveListing(event: RemovedListing): void {
-    /*let pool = Pool.load(event.address.toHexString());
-    
-    let totalSupply = fetchPoolTotalSupply(event.address);
-    let tokenPrice = fetchPoolTokenPrice(event.address);
-    let positionAddresses = fetchPoolPositionAddresses(event.address);
-    let positionBalances = fetchPoolPositionBalances(event.address);
-
-    tokenPrice = (tokenPrice == ZERO_BI) ? BigInt.fromString("1000000000000000000") : tokenPrice;
-
-    // create the user
-    let user = User.load(event.params.userAddress.toHexString());
-    if (user === null)
-    {
-        user = new User(event.params.userAddress.toHexString());
-        user.feesEarned = ZERO_BD;
-    }
-
-    user.save();
-
-    let valueWithdrawn: BigInt = (event.params.numberOfPoolTokens).times(tokenPrice).div(BigInt.fromString("1000000000000000000"));
-  
-    // update pool data
-    pool.tokenPrice = tokenPrice;
-    pool.totalSupply = totalSupply;
-    pool.tradeVolumeUSD = pool.tradeVolumeUSD.plus(valueWithdrawn.toBigDecimal());
-    pool.totalValueLockedUSD = (valueWithdrawn.toBigDecimal() >= pool.totalValueLockedUSD) ? ZERO_BD : pool.totalValueLockedUSD.minus(valueWithdrawn.toBigDecimal());
-    pool.positionAddresses = (positionAddresses) ? positionAddresses : pool.positionAddresses;
-    pool.positionBalances = (positionBalances) ? positionBalances : pool.positionBalances;
-    pool.save();
-  
-    // update global values
-    let tradegen = Tradegen.load(ADDRESS_RESOLVER_ADDRESS);
-    tradegen.totalVolumeUSD = tradegen.totalVolumeUSD.plus(valueWithdrawn.toBigDecimal());
-    tradegen.totalValueLockedUSD = (valueWithdrawn.toBigDecimal() >= tradegen.totalValueLockedUSD) ? ZERO_BD : tradegen.totalValueLockedUSD.minus(valueWithdrawn.toBigDecimal());
-    tradegen.txCount = tradegen.txCount.plus(ONE_BI);
-    tradegen.save();
-  
-    let transaction = PoolTransaction.load(event.transaction.hash.toHexString());
-    if (transaction === null) {
-      transaction = new PoolTransaction(event.transaction.hash.toHexString());
-      transaction.blockNumber = event.block.number;
-      transaction.timestamp = event.block.timestamp;
-      transaction.pool = event.address.toHexString();
-    }
-
-    transaction.save();
-
-    // update withdraw event
-    let withdraw = new WithdrawPoolEvent(event.transaction.hash.toHexString().concat("-withdraw"));
-    withdraw.poolTransaction = transaction.id;
-    withdraw.timestamp = transaction.timestamp;
-    withdraw.userAddress = event.params.userAddress.toHexString();
-    withdraw.poolAddress = event.address.toHexString();
-    withdraw.tokenAmount = event.params.numberOfPoolTokens;
-    withdraw.USDAmount = valueWithdrawn.toBigDecimal();
-    withdraw.save();
-    
-    // update the transaction
-    transaction.withdraw = withdraw.id;
-    transaction.save();
-    
-    // update day entities
-    let poolDayData = updatePoolDayData(event);
-    let poolHourData = updatePoolHourData(event);
-    let tradegenDayData = updateTradegenDayData(event);
-  
-    // deposit specific updating
-    tradegenDayData.dailyVolumeUSD = tradegenDayData.dailyVolumeUSD.plus(valueWithdrawn.toBigDecimal());
-    tradegenDayData.save();
-  
-    // deposit specific updating for pool
-    poolDayData.dailyVolumeUSD = poolDayData.dailyVolumeUSD.plus(valueWithdrawn.toBigDecimal());
-    poolDayData.save();
-  
-    // update hourly pool data
-    poolHourData.hourlyVolumeUSD = poolHourData.hourlyVolumeUSD.plus(valueWithdrawn.toBigDecimal());
-    poolHourData.save();
-
-    let poolPosition = PoolPosition.load(event.address.toHexString().concat("-").concat(event.params.userAddress.toHexString()));
-    if (poolPosition === null)
-    {
-        poolPosition = new PoolPosition(event.address.toHexString().concat("-").concat(event.params.userAddress.toHexString()));
-        poolPosition.user = event.params.userAddress.toHexString();
-        poolPosition.pool = event.address.toHexString();
-        poolPosition.tokenBalance = ZERO_BI;
-        poolPosition.USDValue = ZERO_BI;
-    }
-
-    poolPosition.USDValue = (valueWithdrawn >= poolPosition.USDValue) ? ZERO_BI : poolPosition.USDValue.minus(valueWithdrawn);
-    poolPosition.tokenBalance = (event.params.numberOfPoolTokens >= poolPosition.tokenBalance) ?
-                                  ZERO_BI : poolPosition.tokenBalance.minus(event.params.numberOfPoolTokens);
-    poolPosition.save();*/
+     // update global values
+     let marketplace = Marketplace.load(MARKETPLACE_ADDRESS);
+     if (marketplace === null) {
+       marketplace = new Marketplace(MARKETPLACE_ADDRESS);
+       marketplace.listingCount = 0;
+       marketplace.totalVolumeUSD = ZERO_BD;
+       marketplace.totalTokensSold = ZERO_BI;
+       marketplace.txCount = ZERO_BI;
+     }
+     marketplace.listingCount = (marketplace.listingCount == 0) ? 0 : marketplace.listingCount - 1;
+     marketplace.txCount = marketplace.txCount.plus(ONE_BI);
+     marketplace.save();
+ 
+     // create the user
+     let user = User.load(event.params.seller.toHexString());
+     if (user === null)
+     {
+         user = new User(event.params.seller.toHexString());
+         user.numberOfTokensSold = ZERO_BI;
+         user.tradingVolumeUSD = ZERO_BD;
+     }
+     user.save();
+ 
+     // update the listing
+     let listing = Listing.load(event.params.marketplaceListing.toString());
+     listing.exists = false;
+     listing.seller = user.id;
+     listing.assetAddress = event.params.asset.toHexString();
+     listing.numberOfTokens = ZERO_BI;
+     listing.tokenPrice = ZERO_BI;
+     listing.save();
+     
+     let transaction = new Transaction(event.transaction.hash.toHexString());
+     transaction.blockNumber = event.block.number;
+     transaction.timestamp = event.block.timestamp;
+     transaction.user = user.id;
+     transaction.assetAddress = event.params.asset.toHexString();
+     transaction.save();
+     
+     // update RemoveListing event
+     let remove = new RemoveListingEvent(event.transaction.hash.toHexString().concat("-removeListing"));
+     remove.transaction = transaction.id;
+     remove.timestamp = transaction.timestamp;
+     remove.seller = event.params.seller.toHexString();
+     remove.assetAddress = event.params.asset.toHexString();
+     remove.index = event.params.marketplaceListing;
+     remove.save();
+     
+     // update the transaction
+     transaction.removeListing = remove.id;
+     transaction.save();
+     
+     // update day entities
+     let marketplaceDayData = updateMarketplaceDayData(event);
 }
 
 export function handleUpdatePrice(event: UpdatedPrice): void {
-    /*let pool = Pool.load(event.address.toHexString());
-    
-    let totalSupply = fetchPoolTotalSupply(event.address);
-    let tokenPrice = fetchPoolTokenPrice(event.address);
-    let feeInUSD: BigDecimal = (event.params.amount.toBigDecimal()).times(new BigDecimal(tokenPrice)).div(BigDecimal.fromString("1e18"));
-
-    tokenPrice = (tokenPrice == ZERO_BI) ? BigInt.fromString("1000000000000000000") : tokenPrice;
+    // update global values
+    let marketplace = Marketplace.load(MARKETPLACE_ADDRESS);
+    if (marketplace === null) {
+      marketplace = new Marketplace(MARKETPLACE_ADDRESS);
+      marketplace.listingCount = 0;
+      marketplace.totalVolumeUSD = ZERO_BD;
+      marketplace.totalTokensSold = ZERO_BI;
+      marketplace.txCount = ZERO_BI;
+    }
+    marketplace.txCount = marketplace.txCount.plus(ONE_BI);
+    marketplace.save();
 
     // create the user
-    let user = User.load(event.params.manager.toHexString());
+    let user = User.load(event.params.seller.toHexString());
     if (user === null)
     {
-        user = new User(event.params.manager.toHexString());
-        user.feesEarned = ZERO_BD;
+        user = new User(event.params.seller.toHexString());
+        user.numberOfTokensSold = ZERO_BI;
+        user.tradingVolumeUSD = ZERO_BD;
     }
-
-    user.feesEarned = user.feesEarned.plus(new BigDecimal(event.params.amount));
-
     user.save();
-  
-    // update pool data
-    pool.tokenPrice = tokenPrice;
-    pool.totalSupply = totalSupply;
-    pool.tradeVolumeUSD = pool.tradeVolumeUSD.plus(feeInUSD);
-    pool.totalValueLockedUSD = pool.totalValueLockedUSD.plus(feeInUSD);
-    pool.save();
-  
-    // update global values
-    let tradegen = Tradegen.load(ADDRESS_RESOLVER_ADDRESS);
-    tradegen.totalVolumeUSD = tradegen.totalVolumeUSD.plus(feeInUSD);
-    tradegen.totalValueLockedUSD = tradegen.totalValueLockedUSD.plus(feeInUSD);
-    tradegen.txCount = tradegen.txCount.plus(ONE_BI);
-    tradegen.save();
-  
-    let transaction = PoolTransaction.load(event.transaction.hash.toHexString());
-    if (transaction === null) {
-      transaction = new PoolTransaction(event.transaction.hash.toHexString());
-      transaction.blockNumber = event.block.number;
-      transaction.timestamp = event.block.timestamp;
-      transaction.pool = event.address.toHexString();
+
+    // update the listing
+    let listing = Listing.load(event.params.marketplaceListing.toString());
+    if (listing)
+    {
+      listing.tokenPrice = event.params.newPrice;
+      listing.save();
     }
-
+    
+    let transaction = new Transaction(event.transaction.hash.toHexString());
+    transaction.blockNumber = event.block.number;
+    transaction.timestamp = event.block.timestamp;
+    transaction.user = user.id;
+    transaction.assetAddress = event.params.asset.toHexString();
     transaction.save();
-
-    // update mint event
-    let mint = new MintFeePoolEvent(event.transaction.hash.toHexString().concat("-mintFee"));
-    mint.poolTransaction = transaction.id;
-    mint.timestamp = transaction.timestamp;
-    mint.managerAddress = event.params.manager.toHexString();
-    mint.poolAddress = event.address.toHexString();
-    mint.feesMinted = event.params.amount;
-    mint.save();
+    
+    // update UpdatePrice event
+    let updatePrice = new UpdatePriceEvent(event.transaction.hash.toHexString().concat("-updatePrice"));
+    updatePrice.transaction = transaction.id;
+    updatePrice.timestamp = transaction.timestamp;
+    updatePrice.seller = event.params.seller.toHexString();
+    updatePrice.assetAddress = event.params.asset.toHexString();
+    updatePrice.index = event.params.marketplaceListing;
+    updatePrice.newTokenPrice = event.params.newPrice;
+    updatePrice.save();
     
     // update the transaction
-    transaction.mintFee = mint.id;
+    transaction.updatePrice = updatePrice.id;
     transaction.save();
-  
+    
     // update day entities
-    let poolDayData = updatePoolDayData(event);
-    let poolHourData = updatePoolHourData(event);
-    let tradegenDayData = updateTradegenDayData(event);
-  
-    // deposit specific updating
-    tradegenDayData.dailyVolumeUSD = tradegenDayData.dailyVolumeUSD.plus(new BigDecimal(event.params.amount));
-    tradegenDayData.save();
-  
-    // deposit specific updating for pool
-    poolDayData.dailyVolumeUSD = poolDayData.dailyVolumeUSD.plus(new BigDecimal(event.params.amount));
-    poolDayData.save();
-  
-    // update hourly pool data
-    poolHourData.hourlyVolumeUSD = poolHourData.hourlyVolumeUSD.plus(new BigDecimal(event.params.amount));
-    poolHourData.save();*/
+    let marketplaceDayData = updateMarketplaceDayData(event);
 }
 
 export function handleUpdatedQuantity(event: UpdatedQuantity): void {
-  /*let pool = Pool.load(event.address.toHexString());
-  
-  let positionAddresses = fetchPoolPositionAddresses(event.address);
-  let positionBalances = fetchPoolPositionBalances(event.address);
+  // update global values
+  let marketplace = Marketplace.load(MARKETPLACE_ADDRESS);
+  if (marketplace === null) {
+    marketplace = new Marketplace(MARKETPLACE_ADDRESS);
+    marketplace.listingCount = 0;
+    marketplace.totalVolumeUSD = ZERO_BD;
+    marketplace.totalTokensSold = ZERO_BI;
+    marketplace.txCount = ZERO_BI;
+  }
+  marketplace.txCount = marketplace.txCount.plus(ONE_BI);
+  marketplace.save();
 
-  // update pool data
-  pool.positionAddresses = (positionAddresses) ? positionAddresses : pool.positionAddresses;
-  pool.positionBalances = (positionBalances) ? positionBalances : pool.positionBalances;
-  pool.save();*/
+  // create the user
+  let user = User.load(event.params.seller.toHexString());
+  if (user === null)
+  {
+      user = new User(event.params.seller.toHexString());
+      user.numberOfTokensSold = ZERO_BI;
+      user.tradingVolumeUSD = ZERO_BD;
+  }
+  user.save();
+
+  // update the listing
+  let listing = Listing.load(event.params.marketplaceListing.toString());
+  if (listing)
+  {
+    listing.numberOfTokens = event.params.newQuantity;
+    listing.save();
+  }
+  
+  let transaction = new Transaction(event.transaction.hash.toHexString());
+  transaction.blockNumber = event.block.number;
+  transaction.timestamp = event.block.timestamp;
+  transaction.user = user.id;
+  transaction.assetAddress = event.params.asset.toHexString();
+  transaction.save();
+  
+  // update UpdateQuantity event
+  let updateQuantity = new UpdateQuantityEvent(event.transaction.hash.toHexString().concat("-updateQuantity"));
+  updateQuantity.transaction = transaction.id;
+  updateQuantity.timestamp = transaction.timestamp;
+  updateQuantity.seller = event.params.seller.toHexString();
+  updateQuantity.assetAddress = event.params.asset.toHexString();
+  updateQuantity.index = event.params.marketplaceListing;
+  updateQuantity.newQuantity = event.params.newQuantity;
+  updateQuantity.save();
+  
+  // update the transaction
+  transaction.updateQuantity = updateQuantity.id;
+  transaction.save();
+  
+  // update day entities
+  let marketplaceDayData = updateMarketplaceDayData(event);
 }
 
 export function handlePurchase(event: Purchased): void {
-  /*let pool = Pool.load(event.address.toHexString());
-  
-  let positionAddresses = fetchPoolPositionAddresses(event.address);
-  let positionBalances = fetchPoolPositionBalances(event.address);
+  let USDAmount = event.params.numberOfTokens.times(event.params.tokenPrice).div(BigInt.fromString("1000000000000000000"))
 
-  // update pool data
-  pool.positionAddresses = (positionAddresses) ? positionAddresses : pool.positionAddresses;
-  pool.positionBalances = (positionBalances) ? positionBalances : pool.positionBalances;
-  pool.save();*/
+  // update global values
+  let marketplace = Marketplace.load(MARKETPLACE_ADDRESS);
+  if (marketplace === null) {
+    marketplace = new Marketplace(MARKETPLACE_ADDRESS);
+    marketplace.listingCount = 0;
+    marketplace.totalVolumeUSD = ZERO_BD;
+    marketplace.totalTokensSold = ZERO_BI;
+    marketplace.txCount = ZERO_BI;
+  }
+  marketplace.txCount = marketplace.txCount.plus(ONE_BI);
+  marketplace.totalVolumeUSD = marketplace.totalVolumeUSD.plus(USDAmount.toBigDecimal());
+  marketplace.totalTokensSold = marketplace.totalTokensSold.plus(event.params.numberOfTokens);
+  marketplace.save();
+
+  // create the user
+  let user = User.load(event.params.buyer.toHexString());
+  if (user === null)
+  {
+      user = new User(event.params.buyer.toHexString());
+      user.numberOfTokensSold = ZERO_BI;
+      user.tradingVolumeUSD = ZERO_BD;
+  }
+  user.tradingVolumeUSD = user.tradingVolumeUSD.plus(USDAmount.toBigDecimal())
+  user.save();
+
+  let sellerAddress = "";
+
+  // update the listing
+  let listing = Listing.load(event.params.marketplaceListing.toString());
+  if (listing)
+  {
+    sellerAddress = listing.seller;
+    let newNumberOfTokens = (event.params.numberOfTokens >= listing.numberOfTokens) ? ZERO_BI : listing.numberOfTokens.minus(event.params.numberOfTokens);
+    listing.numberOfTokens = newNumberOfTokens;
+    listing.save();
+  }
+
+  // update seller info
+  if (sellerAddress && sellerAddress != "")
+  {
+    // create the seller
+    let seller = User.load(sellerAddress);
+    if (seller === null)
+    {
+        seller = new User(sellerAddress);
+        seller.numberOfTokensSold = ZERO_BI;
+        seller.tradingVolumeUSD = ZERO_BD;
+    }
+    seller.tradingVolumeUSD = user.tradingVolumeUSD.plus(USDAmount.toBigDecimal())
+    seller.numberOfTokensSold = seller.numberOfTokensSold.plus(event.params.numberOfTokens);
+    seller.save();
+  }
+  
+  let transaction = new Transaction(event.transaction.hash.toHexString());
+  transaction.blockNumber = event.block.number;
+  transaction.timestamp = event.block.timestamp;
+  transaction.user = user.id;
+  transaction.assetAddress = event.params.asset.toHexString();
+  transaction.save();
+  
+  // update Purchase event
+  let purchase = new PurchaseEvent(event.transaction.hash.toHexString().concat("-purchase"));
+  purchase.transaction = transaction.id;
+  purchase.timestamp = transaction.timestamp;
+  purchase.buyer = event.params.buyer.toHexString();
+  purchase.seller = sellerAddress;
+  purchase.assetAddress = event.params.asset.toHexString();
+  purchase.index = event.params.marketplaceListing;
+  purchase.numberOfTokens = event.params.numberOfTokens;
+  purchase.tokenPrice = event.params.tokenPrice;
+  purchase.save();
+  
+  // update the transaction
+  transaction.purchase = purchase.id;
+  transaction.save();
+  
+  // update day entities
+  let marketplaceDayData = updateMarketplaceDayData(event);
+  marketplaceDayData.dailyNumberOfTokensSold = marketplaceDayData.dailyNumberOfTokensSold.plus(event.params.numberOfTokens);
+  marketplaceDayData.dailyVolumeUSD = marketplaceDayData.dailyVolumeUSD.plus(USDAmount.toBigDecimal());
+  marketplaceDayData.save();
 }
