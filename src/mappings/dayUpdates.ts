@@ -1,34 +1,30 @@
 import { BigInt, ethereum } from "@graphprotocol/graph-ts";
 import {
-  Pool,
-  PoolDayData,
-  NFTPool,
-  NFTPoolDayData,
-  TradegenDayData,
-  Tradegen,
+  MarketplaceDayData,
+  Marketplace,
 } from "../../generated/schema";
 import { MARKETPLACE_ADDRESS, ONE_BI, ZERO_BD, ZERO_BI } from "./helpers";
 
-export function updateTradegenDayData(event: ethereum.Event): TradegenDayData {
-  let tradegen = Tradegen.load(ADDRESS_RESOLVER_ADDRESS);
+export function updateMarketplaceDayData(event: ethereum.Event): MarketplaceDayData {
+  let marketplace = Marketplace.load(MARKETPLACE_ADDRESS);
   let timestamp = event.block.timestamp.toI32();
   let dayID = timestamp / 86400;
   let dayStartTimestamp = dayID * 86400;
-  let tradegenDayData = TradegenDayData.load(dayID.toString());
-  if (tradegenDayData === null)
+  let marketplaceDayData = MarketplaceDayData.load(dayID.toString());
+  if (marketplaceDayData === null)
   {
-    tradegenDayData = new TradegenDayData(dayID.toString());
-    tradegenDayData.date = dayStartTimestamp;
-    tradegenDayData.dailyVolumeUSD = ZERO_BD;
-    tradegenDayData.totalVolumeUSD = ZERO_BD;
-    tradegenDayData.totalValueLockedUSD = ZERO_BD;
-    tradegenDayData.txCount = ZERO_BI;
+    marketplaceDayData = new marketplaceDayData(dayID.toString());
+    marketplaceDayData.date = dayStartTimestamp;
+    marketplaceDayData.dailyVolumeUSD = ZERO_BD;
+    marketplaceDayData.totalVolumeUSD = ZERO_BD;
+    marketplaceDayData.totalTokensSold = ZERO_BI;
+    marketplaceDayData.txCount = ZERO_BI;
   }
 
-  tradegenDayData.totalVolumeUSD = tradegen.totalVolumeUSD;
-  tradegenDayData.totalValueLockedUSD = tradegen.totalValueLockedUSD;
-  tradegenDayData.txCount = tradegen.txCount;
-  tradegenDayData.save();
+  marketplaceDayData.totalVolumeUSD = marketplace.totalVolumeUSD;
+  marketplaceDayData.totalTokensSold = marketplace.totalTokensSold;
+  marketplaceDayData.txCount = marketplace.txCount;
+  marketplaceDayData.save();
 
-  return tradegenDayData as TradegenDayData;
+  return marketplaceDayData as MarketplaceDayData;
 }
