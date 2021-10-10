@@ -1,301 +1,129 @@
-type Tradegen @entity {
-  # AddressResolver contract address
+type Marketplace @entity {
+  # Marketplace contract address
   id: ID!
 
-  # pool info
-  poolCount: Int!
-  NFTPoolCount: Int!
+  # listing info
+  listingCount: Int!
 
   # total volume
   totalVolumeUSD: BigDecimal!
 
-  # total value locked
-  totalValueLockedUSD: BigDecimal!
+  # total number of tokens sold
+  totalTokensSold: BigInt!
 
   # transactions
   txCount: BigInt!
 }
 
-type Pool @entity {
-  # pool address
+type Listing @entity {
+  # index in Marketplace contract listings array
   id: ID!
 
-  # mirrored from the smart contract
-  name: String!
-  manager: String!
-  performanceFee: BigInt!
+  seller: User!
+  assetAddress: String!
+  tokenClass: BigInt!
+  numberOfTokens: BigInt!
   tokenPrice: BigInt!
-
-  # used for other stats like marketcap
-  totalSupply: BigInt!
-
-  # pool specific volume
-  tradeVolumeUSD: BigDecimal!
-
-  # total fees collected in USD
-  feesCollected: BigDecimal!
-
-  # TVL
-  totalValueLockedUSD: BigDecimal!
-
-  # positions
-  positionAddresses: [String!]
-  positionBalances: [BigInt!]
-
-  # derived fields
-  poolDayData: [PoolDayData!]! @derivedFrom(field: "pool")
-  transactions: [PoolTransaction!]! @derivedFrom(field: "pool")
-}
-
-type NFTPool @entity {
-  # NFT pool address
-  id: ID!
-
-  # mirrored from the smart contract
-  name: String!
-  manager: String!
-  maxSupply: BigInt!
-  seedPrice: BigInt!
-  tokenPrice: BigInt!
-
-  # used for other stats like marketcap
-  totalSupply: BigInt!
-
-  # pool specific volume
-  tradeVolumeUSD: BigDecimal!
-
-  # total fees collected in USD
-  feesCollected: BigDecimal!
-
-  # TVL
-  totalValueLockedUSD: BigDecimal!
-
-  # positions
-  positionAddresses: [String!]
-  positionBalances: [BigInt!]
-
-  # derived fields
-  poolDayData: [NFTPoolDayData!]! @derivedFrom(field: "NFTPool")
-  transactions: [NFTPoolTransaction!]! @derivedFrom(field: "NFTPool")
-}
-
-type PoolLookup @entity {
-  id: ID!
-  poolAddress: Pool!
-}
-
-type NFTPoolLookup @entity {
-  id: ID!
-  NFTPoolAddress: NFTPool!
 }
 
 type User @entity {
   id: ID!
-  poolPositions: [PoolPosition!]! @derivedFrom(field: "user")
-  NFTPoolPositions: [NFTPoolPosition!]! @derivedFrom(field: "user")
-  managedInvestments: [ManagedInvestment!]! @derivedFrom(field: "manager")
-  feesEarned: BigDecimal!
+  numberOfTokensSold: BigInt!
+  tradingVolumeUSD: BigDecimal!
+
+  listings: [Listing!]! @derivedFrom(field: "seller")
+  transactions: [Transaction!]! @derivedFrom(field: "user")
 }
 
-type PoolPosition @entity {
-  id: ID!
-  user: User!
-  pool: Pool!
-  tokenBalance: BigInt!
-  USDValue: BigInt!
-}
-
-type NFTPoolPosition @entity {
-  id: ID!
-  user: User!
-  NFTPool: NFTPool!
-  tokenBalance: BigInt!
-  USDValue: BigInt!
-}
-
-type PoolTransaction @entity {
+type Transaction @entity {
   # transaction hash
   id: ID!
   blockNumber: BigInt!
   timestamp: BigInt!
-  pool: Pool!
-  create: CreatePool
-  deposit: DepositPool
-  withdraw: WithdrawPool
-  mintFee: MintFeePool
+  user: User!
+  assetAddress: String!
+
+  createListing: CreateListing
+  removeListing: RemoveListing
+  updatePrice: UpdatePrice
+  updateQuantity: UpdateQuantity
+  purchase: Purchase
 }
 
-type NFTPoolTransaction @entity {
-  # transaction hash
+type CreateListing @entity {
+  # Transaction ID + "-createListing"
   id: ID!
-  blockNumber: BigInt!
-  timestamp: BigInt!
-  NFTPool: NFTPool!
-  create: CreateNFTPool
-  deposit: DepositNFTPool
-  withdraw: WithdrawNFTPool
+  transaction: Transaction!
+  timestamp: BigInt! # need this to pull recent txns for marketplace
+
+  seller: String!
+  assetAddress: String!
+  tokenClass: BigInt!
+  numberOfTokens: BigInt!
+  tokenPrice: BigInt!
+
+  index: BigInt! # index in Marketplace contract listings array
 }
 
-type CreatePool @entity {
-  # PoolTransaction ID + "-create"
+type RemoveListing @entity {
+  # Transaction ID + "-removeListing"
   id: ID!
-  poolTransaction: PoolTransaction!
-  timestamp: BigInt! # need this to pull recent txns for specific pool or NFT pool
+  transaction: Transaction!
+  timestamp: BigInt! # need this to pull recent txns for marketplace
 
-  manager: String!
-  poolAddress: String!
-  poolIndex: BigInt! # index in PoolFactory pools array
+  seller: String!
+  assetAddress: String!
+
+  index: BigInt! # index in Marketplace contract listings array
 }
 
-type CreateNFTPool @entity {
-  # NFTPoolTransaction ID + "-create"
+type UpdatePrice @entity {
+  # Transaction ID + "-updatePrice"
   id: ID!
-  NFTPoolTransaction: NFTPoolTransaction!
-  timestamp: BigInt! # need this to pull recent txns for specific pool or NFT pool
+  transaction: Transaction!
+  timestamp: BigInt! # need this to pull recent txns for marketplace
 
-  manager: String!
-  NFTPoolAddress: String!
-  NFTPoolIndex: BigInt! # index in NFTPoolFactory pools array
-  
-  seedPrice: BigInt!
-  maxSupply: BigInt!
+  seller: String!
+  assetAddress: String!
+  newTokenPrice: BigInt!
+
+  index: BigInt! # index in Marketplace contract listings array
 }
 
-type DepositPool @entity {
-  # PoolTransaction ID + "-deposit"
+type UpdateQuantity @entity {
+  # Transaction ID + "-updateQuantity"
   id: ID!
-  poolTransaction: PoolTransaction!
-  timestamp: BigInt! # need this to pull recent txns for specific pool or NFT pool
+  transaction: Transaction!
+  timestamp: BigInt! # need this to pull recent txns for marketplace
 
-  userAddress: String!
-  poolAddress: String!
-  amount: BigInt! # USD amount invested
+  seller: String!
+  assetAddress: String!
+  newQuantity: BigInt!
+
+  index: BigInt! # index in Marketplace contract listings array
 }
 
-type DepositNFTPool @entity {
-  # NFTPoolTransaction ID + "-deposit"
+type Purchase @entity {
+  # Transaction ID + "-purchase"
   id: ID!
-  NFTPoolTransaction: NFTPoolTransaction!
-  timestamp: BigInt! # need this to pull recent txns for specific pool or NFT pool
+  transaction: Transaction!
+  timestamp: BigInt! # need this to pull recent txns for marketplace
 
-  userAddress: String!
-  NFTPoolAddress: String!
-  tokenAmount: BigInt! # number of tokens purchased
-  USDAmount: BigInt! # amount of USD invested
+  seller: String!
+  assetAddress: String!
+  numberOfTokens: BigInt!
+
+  index: BigInt! # index in Marketplace contract listings array
 }
 
-type WithdrawPool @entity {
-  # PoolTransaction ID + "-withdraw"
-  id: ID!
-  poolTransaction: PoolTransaction!
-  timestamp: BigInt! # need this to pull recent txns for specific pool or NFT pool
-
-  userAddress: String!
-  poolAddress: String!
-  tokenAmount: BigInt! # number of pool tokens withdrawn
-  USDAmount: BigDecimal! # amount of USD withdrawn
-}
-
-type WithdrawNFTPool @entity {
-  # NFTPoolTransaction ID + "-withdraw"
-  id: ID!
-  NFTPoolTransaction: NFTPoolTransaction!
-  timestamp: BigInt! # need this to pull recent txns for specific pool or NFT pool
-
-  userAddress: String!
-  NFTPoolAddress: String!
-  tokenAmount: BigInt! # number of NFT pool tokens withdrawn
-  USDAmount: BigDecimal! # amount of USD withdrawn
-}
-
-type MintFeePool @entity {
-  # PoolTransaction ID + "-mintFee"
-  id: ID!
-  poolTransaction: PoolTransaction!
-  timestamp: BigInt! # need this to pull recent txns for specific pool or NFT pool
-
-  managerAddress: String!
-  poolAddress: String!
-  feesMinted: BigInt! # number of pool tokens minted as performance fee
-}
-
-type ManagedInvestment @entity {
-  id: ID!
-  pool: Pool
-  NFTPool: NFTPool
-  manager: User! # address of investment's manager
-}
-
-# Data accumulated and condensed into day stats for all of Tradegen
-type TradegenDayData @entity {
+# Data accumulated and condensed into day stats for all of marketplace
+type MarketplaceDayData @entity {
   id: ID! # timestamp rounded to current day by dividing by 86400
   date: Int!
 
   dailyVolumeUSD: BigDecimal!
   totalVolumeUSD: BigDecimal! # Accumulate at each trade, not just calculated off whatever totalVolume is. making it more accurate as it is a live conversion
-  totalValueLockedUSD: BigDecimal!
+  dailyNumberOfTokensSold: BigInt!
 
   txCount: BigInt!
-}
-
-type PoolHourData @entity {
-  id: ID!
-  hourStartUnix: Int! # unix timestamp for start of hour
-  pool: Pool!
-
-  totalSupply: BigInt!
-  tokenPrice: BigInt!
-  totalValueLockedUSD: BigDecimal!
-
-  # volume stats
-  hourlyVolumeUSD: BigDecimal!
-  hourlyTxns: BigInt!
-}
-
-type NFTPoolHourData @entity {
-  id: ID!
-  hourStartUnix: Int! # unix timestamp for start of hour
-  NFTPool: NFTPool!
-
-  totalSupply: BigInt!
-  tokenPrice: BigInt!
-  totalValueLockedUSD: BigDecimal!
-
-  # volume stats
-  hourlyVolumeUSD: BigDecimal!
-  hourlyTxns: BigInt!
-}
-
-type PoolDayData @entity {
-  id: ID!
-  date: Int!
-  pool: Pool!
-
-  # volume stats
-  dailyVolumeUSD: BigDecimal!
-  dailyTxns: BigInt!
-
-  # TVL stats
-  totalValueLockedUSD: BigDecimal!
-  totalSupply: BigInt!
-
-  # price stats
-  priceUSD: BigInt!
-}
-
-type NFTPoolDayData @entity {
-  id: ID!
-  date: Int!
-  NFTPool: NFTPool!
-
-  # volume stats
-  dailyVolumeUSD: BigDecimal!
-  dailyTxns: BigInt!
-
-  # TVL stats
-  totalValueLockedUSD: BigDecimal!
-  totalSupply: BigInt!
-
-  # price stats
-  priceUSD: BigInt!
 }
