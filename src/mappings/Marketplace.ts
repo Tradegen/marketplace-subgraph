@@ -114,12 +114,15 @@ export function handleRemoveListing(event: RemovedListing): void {
  
      // update the listing
      let listing = Listing.load(event.params.marketplaceListing.toString());
-     listing.exists = false;
-     listing.seller = user.id;
-     listing.assetAddress = event.params.asset.toHexString();
-     listing.numberOfTokens = ZERO_BI;
-     listing.tokenPrice = ZERO_BI;
-     listing.save();
+     if (listing)
+     {
+      listing.exists = false;
+      listing.seller = user.id;
+      listing.assetAddress = event.params.asset.toHexString();
+      listing.numberOfTokens = ZERO_BI;
+      listing.tokenPrice = ZERO_BI;
+      listing.save();
+     }
      
      let transaction = new Transaction(event.transaction.hash.toHexString());
      transaction.blockNumber = event.block.number;
@@ -285,32 +288,13 @@ export function handlePurchase(event: Purchased): void {
   user.tradingVolumeUSD = user.tradingVolumeUSD.plus(USDAmount.toBigDecimal())
   user.save();
 
-  let sellerAddress = "";
-
   // update the listing
   let listing = Listing.load(event.params.marketplaceListing.toString());
   if (listing)
   {
-    sellerAddress = listing.seller;
     let newNumberOfTokens = (event.params.numberOfTokens >= listing.numberOfTokens) ? ZERO_BI : listing.numberOfTokens.minus(event.params.numberOfTokens);
     listing.numberOfTokens = newNumberOfTokens;
     listing.save();
-  }
-
-  // update seller info
-  if (sellerAddress && sellerAddress != "")
-  {
-    // create the seller
-    let seller = User.load(sellerAddress);
-    if (seller === null)
-    {
-        seller = new User(sellerAddress);
-        seller.numberOfTokensSold = ZERO_BI;
-        seller.tradingVolumeUSD = ZERO_BD;
-    }
-    seller.tradingVolumeUSD = user.tradingVolumeUSD.plus(USDAmount.toBigDecimal())
-    seller.numberOfTokensSold = seller.numberOfTokensSold.plus(event.params.numberOfTokens);
-    seller.save();
   }
   
   let transaction = new Transaction(event.transaction.hash.toHexString());
@@ -325,7 +309,6 @@ export function handlePurchase(event: Purchased): void {
   purchase.transaction = transaction.id;
   purchase.timestamp = transaction.timestamp;
   purchase.buyer = event.params.buyer.toHexString();
-  purchase.seller = sellerAddress;
   purchase.assetAddress = event.params.asset.toHexString();
   purchase.index = event.params.marketplaceListing;
   purchase.numberOfTokens = event.params.numberOfTokens;

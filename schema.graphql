@@ -111,7 +111,6 @@ type Purchase @entity {
   timestamp: BigInt! # need this to pull recent txns for marketplace
 
   buyer: String!
-  seller: String!
   assetAddress: String!
   numberOfTokens: BigInt!
   tokenPrice: BigInt!

@@ -7,6 +7,16 @@ import { MARKETPLACE_ADDRESS, ZERO_BD, ZERO_BI } from "./helpers";
 
 export function updateMarketplaceDayData(event: ethereum.Event): MarketplaceDayData {
   let marketplace = Marketplace.load(MARKETPLACE_ADDRESS);
+  if (marketplace === null)
+  {
+    marketplace = new Marketplace(MARKETPLACE_ADDRESS);
+    marketplace.listingCount = 0;
+    marketplace.totalVolumeUSD = ZERO_BD;
+    marketplace.totalTokensSold = ZERO_BI;
+    marketplace.txCount = ZERO_BI;
+  }
+  marketplace.save();
+  
   let timestamp = event.block.timestamp.toI32();
   let dayID = timestamp / 86400;
   let dayStartTimestamp = dayID * 86400;

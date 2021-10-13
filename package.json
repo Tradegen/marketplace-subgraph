@@ -9,11 +9,13 @@
     "prepare": "husky install"
   },
   "devDependencies": {
-    "@graphprotocol/graph-cli": "^0.22.0",
-    "@graphprotocol/graph-ts": "^0.22.0",
     "typescript": "^3.5.2"
   },
   "files": [
     "schema.graphql"
-  ]
+  ],
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.20.0",
+    "@graphprotocol/graph-ts": "^0.20.0"
+  }
 }
