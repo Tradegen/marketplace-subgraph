@@ -21,6 +21,7 @@ import {
   updateMarketplaceDayData,
 } from "./dayUpdates";
 import {
+  fetchTokenClass,
   MARKETPLACE_ADDRESS,
   ONE_BI,
   ZERO_BD,
@@ -262,6 +263,7 @@ export function handleUpdatedQuantity(event: UpdatedQuantity): void {
 
 export function handlePurchase(event: Purchased): void {
   let USDAmount = event.params.numberOfTokens.times(event.params.tokenPrice).div(BigInt.fromString("1000000000000000000"))
+  let tokenClass = fetchTokenClass(event.params.marketplaceListing);
 
   // update global values
   let marketplace = Marketplace.load(MARKETPLACE_ADDRESS);
@@ -313,6 +315,7 @@ export function handlePurchase(event: Purchased): void {
   purchase.index = event.params.marketplaceListing;
   purchase.numberOfTokens = event.params.numberOfTokens;
   purchase.tokenPrice = event.params.tokenPrice;
+  purchase.tokenClass = tokenClass;
   purchase.save();
   
   // update the transaction

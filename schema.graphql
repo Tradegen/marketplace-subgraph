@@ -114,6 +114,7 @@ type Purchase @entity {
   assetAddress: String!
   numberOfTokens: BigInt!
   tokenPrice: BigInt!
+  tokenClass: BigInt!
 
   index: BigInt! # index in Marketplace contract listings array
 }

@@ -3,6 +3,7 @@ import {
   BigDecimal,
   BigInt
 } from "@graphprotocol/graph-ts";
+import { Marketplace as MarketplaceContract} from "../types/Marketplace/Marketplace";
 
 export const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
 
@@ -56,4 +57,13 @@ export function isNullEthValue(value: string): boolean {
     value ==
     "0x0000000000000000000000000000000000000000000000000000000000000001"
   );
+}
+
+export function fetchTokenClass(listingIndex: BigInt): BigInt {
+  let contract = MarketplaceContract.bind(Address.fromString(MARKETPLACE_ADDRESS));
+
+  let result = contract.try_getMarketplaceListing(listingIndex);
+  let resultValue2 = result.value.toMap().get("value2").toBigInt();
+
+  return resultValue2 ? resultValue2 : ZERO_BI;
 }
