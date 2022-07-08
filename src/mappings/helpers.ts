@@ -4,6 +4,7 @@ import {
   BigInt
 } from "@graphprotocol/graph-ts";
 import { Marketplace as MarketplaceContract} from "../types/Marketplace/Marketplace";
+import { NFTPool as NFTPoolContract} from "../types/NFTPool/NFTPool";
 
 export const ADDRESS_ZERO = "0x0000000000000000000000000000000000000000";
 
@@ -66,4 +67,14 @@ export function fetchTokenClass(listingIndex: BigInt): BigInt {
   let resultValue2 = result.value.toMap().get("value2").toBigInt();
 
   return resultValue2 ? resultValue2 : ZERO_BI;
+}
+
+export function fetchNFTPoolName(NFTPoolAddress: Address): string {
+  let contract = NFTPoolContract.bind(NFTPoolAddress);
+
+  // try types string for name
+  let nameValue = "unknown";
+  let nameResult = contract.try_name();
+
+  return nameResult.value ? nameResult.value : nameValue;
 }

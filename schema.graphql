@@ -19,12 +19,14 @@ type Listing @entity {
   # index in Marketplace contract listings array
   id: ID!
   exists: Boolean!
+  lastUpdated: BigInt!
 
   seller: User!
   assetAddress: String!
   tokenClass: BigInt!
   numberOfTokens: BigInt!
   tokenPrice: BigInt!
+  assetName: String!
 }
 
 type User @entity {

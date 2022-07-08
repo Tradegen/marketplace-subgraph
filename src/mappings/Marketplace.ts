@@ -22,6 +22,7 @@ import {
 } from "./dayUpdates";
 import {
   fetchTokenClass,
+  fetchNFTPoolName,
   MARKETPLACE_ADDRESS,
   ONE_BI,
   ZERO_BD,
@@ -29,6 +30,7 @@ import {
 } from "./helpers";
 
 export function handleCreateListing(event: CreatedListing): void {
+    let poolName = fetchNFTPoolName(event.params.asset);
     // update global values
     let marketplace = Marketplace.load(MARKETPLACE_ADDRESS);
     if (marketplace === null) {
@@ -60,6 +62,8 @@ export function handleCreateListing(event: CreatedListing): void {
     listing.tokenClass = event.params.tokenClass;
     listing.numberOfTokens = event.params.numberOfTokens;
     listing.tokenPrice = event.params.price;
+    listing.lastUpdated = event.block.timestamp;
+    listing.assetName = poolName;
     listing.save();
     
     let transaction = new Transaction(event.transaction.hash.toHexString());
@@ -122,6 +126,7 @@ export function handleRemoveListing(event: RemovedListing): void {
       listing.assetAddress = event.params.asset.toHexString();
       listing.numberOfTokens = ZERO_BI;
       listing.tokenPrice = ZERO_BI;
+      listing.lastUpdated = event.block.timestamp;
       listing.save();
      }
      
@@ -177,6 +182,7 @@ export function handleUpdatePrice(event: UpdatedPrice): void {
     if (listing)
     {
       listing.tokenPrice = event.params.newPrice;
+      listing.lastUpdated = event.block.timestamp;
       listing.save();
     }
     
@@ -233,6 +239,7 @@ export function handleUpdatedQuantity(event: UpdatedQuantity): void {
   if (listing)
   {
     listing.numberOfTokens = event.params.newQuantity;
+    listing.lastUpdated = event.block.timestamp;
     listing.save();
   }
   
@@ -296,6 +303,7 @@ export function handlePurchase(event: Purchased): void {
   {
     let newNumberOfTokens = (event.params.numberOfTokens >= listing.numberOfTokens) ? ZERO_BI : listing.numberOfTokens.minus(event.params.numberOfTokens);
     listing.numberOfTokens = newNumberOfTokens;
+    listing.lastUpdated = event.block.timestamp;
     listing.save();
   }
   
